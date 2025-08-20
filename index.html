@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Reaction Master</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 25% 25%, #ff6b6b44 0%, transparent 50%),
+                        radial-gradient(circle at 75% 75%, #4ecdc444 0%, transparent 50%),
+                        radial-gradient(circle at 50% 50%, #45b7d144 0%, transparent 50%);
+            animation: bgPulse 8s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px rgba(255,255,255,0.5);
+            animation: titleGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { text-shadow: 0 0 20px rgba(255,255,255,0.5); }
+            to { text-shadow: 0 0 30px rgba(255,255,255,0.8), 0 0 40px rgba(255,255,255,0.4); }
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.15);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .game-area {
+            width: 100%;
+            max-width: 800px;
+            height: 500px;
+            position: relative;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .shape {
+            position: absolute;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
+            animation: shapeAppear 0.3s ease-out;
+        }
+
+        @keyframes shapeAppear {
+            0% {
+                transform: scale(0) rotate(180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        .shape:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 25px rgba(255,255,255,0.6));
+        }
+
+        .shape:active {
+            transform: scale(0.9);
+        }
+
+        /* Shape styles */
+        .circle {
+            border-radius: 50%;
+            background: linear-gradient(135deg, #ff6b6b, #ff8e53);
+        }
+
+        .square {
+            background: linear-gradient(135deg, #4ecdc4, #44a08d);
+            border-radius: 10px;
+        }
+
+        .triangle {
+            width: 0;
+            height: 0;
+            background: none;
+        }
+
+        .triangle.size-60 {
+            border-left: 30px solid transparent;
+            border-right: 30px solid transparent;
+            border-bottom: 52px solid #ffd93d;
+        }
+
+        .triangle.size-80 {
+            border-left: 40px solid transparent;
+            border-right: 40px solid transparent;
+            border-bottom: 69px solid #ffd93d;
+        }
+
+        .triangle.size-100 {
+            border-left: 50px solid transparent;
+            border-right: 50px solid transparent;
+            border-bottom: 87px solid #ffd93d;
+        }
+
+        .pentagon {
+            position: relative;
+            background: linear-gradient(135deg, #a8e6cf, #7fcdcd);
+            clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
+        }
+
+        .hexagon {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%);
+        }
+
+        .star {
+            background: linear-gradient(135deg, #ff9a9e, #fecfef);
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+        }
+
+        .game-status {
+            text-align: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 20px;
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background: linear-gradient(135deg, #7c8df0, #8a5ab8);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .reaction-time {
+            position: absolute;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 0 10px rgba(255,255,255,0.8);
+            animation: reactionTime 2s ease-out forwards;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        @keyframes reactionTime {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-50px) scale(1.2);
+            }
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: particleFloat 1.5s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(var(--dx), var(--dy)) scale(0);
+            }
+        }
+
+        .best-time {
+            color: #ffd93d !important;
+            text-shadow: 0 0 15px rgba(255, 217, 61, 0.8) !important;
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .game-area {
+                height: 400px;
+                margin: 0 10px 20px 10px;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                margin: 0 10px 20px 10px;
+            }
+            
+            .controls {
+                margin: 0 10px;
+            }
+            
+            .btn {
+                padding: 12px 24px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-animation"></div>
+    
+    <div class="game-container">
+        <h1 class="title">SHAPE REACTION MASTER</h1>
+        
+        <div class="stats-container">
+            <div class="stat">
+                <div class="stat-label">Shapes Clicked</div>
+                <div class="stat-value" id="shapesClicked">0</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Average Time</div>
+                <div class="stat-value" id="averageTime">0ms</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Best Time</div>
+                <div class="stat-value best-time" id="bestTime">--</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">Current Streak</div>
+                <div class="stat-value" id="streak">0</div>
+            </div>
+        </div>
+
+        <div class="game-status" id="gameStatus">Click START to begin!</div>
+
+        <div class="game-area" id="gameArea"></div>
+
+        <div class="controls">
+            <button class="btn" id="startBtn">START GAME</button>
+            <button class="btn" id="pauseBtn" disabled>PAUSE</button>
+            <button class="btn" id="resetBtn">RESET STATS</button>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            isPlaying: false,
+            isPaused: false,
+            shapesClicked: 0,
+            reactionTimes: [],
+            bestTime: Infinity,
+            currentStreak: 0,
+            currentShape: null,
+            shapeAppearTime: 0,
+            gameInterval: null,
+            nextShapeTimeout: null
+        };
+
+        const shapes = ['circle', 'square', 'triangle', 'pentagon', 'hexagon', 'star'];
+        const colors = [
+            'linear-gradient(135deg, #ff6b6b, #ff8e53)',
+            'linear-gradient(135deg, #4ecdc4, #44a08d)', 
+            '#ffd93d',
+            'linear-gradient(135deg, #a8e6cf, #7fcdcd)',
+            'linear-gradient(135deg, #667eea, #764ba2)',
+            'linear-gradient(135deg, #ff9a9e, #fecfef)'
+        ];
+
+        const elements = {
+            gameArea: document.getElementById('gameArea'),
+            gameStatus: document.getElementById('gameStatus'),
+            shapesClicked: document.getElementById('shapesClicked'),
+            averageTime: document.getElementById('averageTime'),
+            bestTime: document.getElementById('bestTime'),
+            streak: document.getElementById('streak'),
+            startBtn: document.getElementById('startBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            resetBtn: document.getElementById('resetBtn')
+        };
+
+        function updateStats() {
+            elements.shapesClicked.textContent = gameState.shapesClicked;
+            elements.streak.textContent = gameState.currentStreak;
+            
+            if (gameState.reactionTimes.length > 0) {
+                const average = gameState.reactionTimes.reduce((a, b) => a + b) / gameState.reactionTimes.length;
+                elements.averageTime.textContent = Math.round(average) + 'ms';
+                
+                if (gameState.bestTime !== Infinity) {
+                    elements.bestTime.textContent = gameState.bestTime + 'ms';
+                }
+            }
+        }
+
+        function createParticles(x, y, color) {
+            const colors = ['#ff6b6b', '#4ecdc4', '#ffd93d', '#a8e6cf', '#667eea', '#ff9a9e'];
+            
+            for (let i = 0; i < 12; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = Math.random() * 6 + 3 + 'px';
+                particle.style.height = particle.style.width;
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                const dx = (Math.random() - 0.5) * 150;
+                const dy = (Math.random() - 0.5) * 150;
+                particle.style.setProperty('--dx', dx + 'px');
+                particle.style.setProperty('--dy', dy + 'px');
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 1500);
+            }
+        }
+
+        function showReactionTime(x, y, time, isBest = false) {
+            const reactionDisplay = document.createElement('div');
+            reactionDisplay.className = 'reaction-time';
+            if (isBest) reactionDisplay.classList.add('best-time');
+            
+            reactionDisplay.textContent = time + 'ms';
+            if (isBest) reactionDisplay.textContent += ' NEW BEST!';
+            
+            reactionDisplay.style.left = x + 'px';
+            reactionDisplay.style.top = y + 'px';
+            
+            document.body.appendChild(reactionDisplay);
+            setTimeout(() => reactionDisplay.remove(), 2000);
+        }
+
+        function getRandomPosition() {
+            const gameRect = elements.gameArea.getBoundingClientRect();
+            const shapeSize = Math.random() * 40 + 60; // 60-100px
+            
+            const maxX = elements.gameArea.offsetWidth - shapeSize;
+            const maxY = elements.gameArea.offsetHeight - shapeSize;
+            
+            const x = Math.random() * maxX;
+            const y = Math.random() * maxY;
+            
+            return { x, y, size: shapeSize };
+        }
+
+        function createShape() {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            // Clear any existing timeout first
+            if (gameState.nextShapeTimeout) {
+                clearTimeout(gameState.nextShapeTimeout);
+                gameState.nextShapeTimeout = null;
+            }
+            
+            // Remove previous shape
+            if (gameState.currentShape) {
+                gameState.currentShape.remove();
+                gameState.currentShape = null;
+            }
+            
+            const shapeType = shapes[Math.floor(Math.random() * shapes.length)];
+            const position = getRandomPosition();
+            
+            const shape = document.createElement('div');
+            shape.className = `shape ${shapeType} size-${Math.round(position.size)}`;
+            
+            shape.style.left = position.x + 'px';
+            shape.style.top = position.y + 'px';
+            
+            if (shapeType !== 'triangle') {
+                shape.style.width = position.size + 'px';
+                shape.style.height = position.size + 'px';
+                
+                if (shapeType === 'circle' || shapeType === 'square') {
+                    shape.style.background = colors[shapes.indexOf(shapeType)];
+                } else {
+                    shape.style.background = colors[shapes.indexOf(shapeType)];
+                }
+            }
+            
+            shape.addEventListener('click', () => handleShapeClick(shape, position.x, position.y));
+            
+            elements.gameArea.appendChild(shape);
+            gameState.currentShape = shape;
+            gameState.shapeAppearTime = Date.now();
+            
+            elements.gameStatus.textContent = 'Click the shape as fast as you can!';
+            
+            // Auto-remove shape after 3 seconds if not clicked
+            setTimeout(() => {
+                if (gameState.currentShape === shape && gameState.isPlaying && !gameState.isPaused) {
+                    // Shape timed out - create new one
+                    gameState.currentStreak = 0;
+                    updateStats();
+                    elements.gameStatus.textContent = 'Too slow! Try the next one...';
+                    
+                    shape.remove();
+                    gameState.currentShape = null;
+                    
+                    // Create next shape after 1 second
+                    gameState.nextShapeTimeout = setTimeout(createShape, 1000);
+                }
+            }, 3000);
+        }
+
+        function handleShapeClick(shape, x, y) {
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            const reactionTime = Date.now() - gameState.shapeAppearTime;
+            const clickX = x + 50; // Approximate center
+            const clickY = y + 50;
+            
+            gameState.reactionTimes.push(reactionTime);
+            gameState.shapesClicked++;
+            gameState.currentStreak++;
+            
+            let isBest = false;
+            if (reactionTime < gameState.bestTime) {
+                gameState.bestTime = reactionTime;
+                isBest = true;
+            }
+            
+            // Visual feedback
+            createParticles(clickX, clickY);
+            showReactionTime(clickX, clickY, reactionTime, isBest);
+            
+            // Remove shape
+            shape.remove();
+            gameState.currentShape = null;
+            
+            updateStats();
+            
+            // Schedule next shape
+            const delay = Math.random() * 2000 + 1000; // 1-3 seconds
+            elements.gameStatus.textContent = `Great! Next shape in ${Math.round(delay/1000)} seconds...`;
+            
+            gameState.nextShapeTimeout = setTimeout(createShape, delay);
+        }
+
+        function startGame() {
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+            
+            elements.startBtn.disabled = true;
+            elements.pauseBtn.disabled = false;
+            elements.startBtn.textContent = 'PLAYING...';
+            
+            createShape();
+        }
+
+        function pauseGame() {
+            if (gameState.isPaused) {
+                // Resume
+                gameState.isPaused = false;
+                elements.pauseBtn.textContent = 'PAUSE';
+                elements.gameStatus.textContent = 'Game resumed!';
+                
+                // Create new shape after short delay
+                setTimeout(createShape, 1000);
+            } else {
+                // Pause
+                gameState.isPaused = true;
+                elements.pauseBtn.textContent = 'RESUME';
+                elements.gameStatus.textContent = 'Game paused';
+                
+                // Clear timeouts
+                if (gameState.nextShapeTimeout) {
+                    clearTimeout(gameState.nextShapeTimeout);
+                }
+                
+                // Remove current shape
+                if (gameState.currentShape) {
+                    gameState.currentShape.remove();
+                    gameState.currentShape = null;
+                }
+            }
+        }
+
+        function stopGame() {
+            gameState.isPlaying = false;
+            gameState.isPaused = false;
+            
+            elements.startBtn.disabled = false;
+            elements.pauseBtn.disabled = true;
+            elements.startBtn.textContent = 'START GAME';
+            elements.pauseBtn.textContent = 'PAUSE';
+            
+            // Clear timeouts
+            if (gameState.nextShapeTimeout) {
+                clearTimeout(gameState.nextShapeTimeout);
+            }
+            
+            // Remove current shape
+            if (gameState.currentShape) {
+                gameState.currentShape.remove();
+                gameState.currentShape = null;
+            }
+            
+            elements.gameStatus.textContent = 'Game stopped. Click START to play again!';
+        }
+
+        function resetStats() {
+            stopGame();
+            
+            gameState.shapesClicked = 0;
+            gameState.reactionTimes = [];
+            gameState.bestTime = Infinity;
+            gameState.currentStreak = 0;
+            
+            elements.bestTime.textContent = '--';
+            elements.gameStatus.textContent = 'Stats reset! Click START to begin!';
+            
+            updateStats();
+        }
+
+        // Event listeners
+        elements.startBtn.addEventListener('click', startGame);
+        elements.pauseBtn.addEventListener('click', pauseGame);
+        elements.resetBtn.addEventListener('click', resetStats);
+
+        // Handle missed clicks but keep game going
+        elements.gameArea.addEventListener('click', (e) => {
+            if (e.target === elements.gameArea && gameState.isPlaying && !gameState.isPaused) {
+                // Missed click - reset streak but continue game
+                gameState.currentStreak = 0;
+                updateStats();
+                elements.gameStatus.textContent = 'Missed! Streak reset to 0';
+                
+                // Remove current shape and create new one after short delay
+                if (gameState.currentShape) {
+                    gameState.currentShape.remove();
+                    gameState.currentShape = null;
+                }
+                
+                // Clear any existing timeout
+                if (gameState.nextShapeTimeout) {
+                    clearTimeout(gameState.nextShapeTimeout);
+                }
+                
+                // Create new shape after 1 second
+                gameState.nextShapeTimeout = setTimeout(createShape, 1000);
+            }
+        });
+
+        // Initialize
+        updateStats();
+    </script>
+</body>
+</html>
